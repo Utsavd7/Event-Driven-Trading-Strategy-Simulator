@@ -58,6 +58,7 @@ frontend/yarn-error.log*
 backend/cache/
 *.cache
 .cache/
+backend/__pycache__
 
 # IDE and Editor files
 .vscode/
