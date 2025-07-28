@@ -173,3 +173,5 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 .nfs*
+
+frontend/node_modules
