@@ -15,6 +15,11 @@ function Dashboard() {
   // Connect WebSocket for live prices
   useEffect(() => {
     if (ticker) {
+      // Close existing connection
+      if (ws) {
+        ws.close();
+      }
+
       const websocket = api.connectWebSocket(ticker);
       
       websocket.onmessage = (event) => {
@@ -22,6 +27,10 @@ function Dashboard() {
         if (data.type === 'price_update') {
           setLiveData(prev => ({ ...prev, quote: data.data }));
         }
+      };
+
+      websocket.onerror = (error) => {
+        console.error('WebSocket error:', error);
       };
 
       setWs(websocket);
@@ -34,7 +43,7 @@ function Dashboard() {
     if (ticker) {
       api.getLiveData(ticker)
         .then(res => setLiveData(res.data))
-        .catch(err => toast.error('Error fetching live data'));
+        .catch(err => console.error('Error fetching live data:', err));
     }
   }, [ticker]);
 
@@ -46,9 +55,20 @@ function Dashboard() {
         ...params
       });
       setBacktestData(response.data);
-      toast.success('Backtest completed!');
+      
+      // Show success message with summary
+      if (response.data.overall_metrics && response.data.overall_metrics.total_events > 0) {
+        const metrics = response.data.overall_metrics;
+        toast.success(
+          `Backtest completed! ${metrics.total_events} events analyzed with ${(metrics.win_rate * 100).toFixed(1)}% win rate`,
+          { autoClose: 5000 }
+        );
+      } else {
+        toast.warning('No events found for the selected criteria');
+      }
     } catch (error) {
-      toast.error('Backtest failed: ' + error.message);
+      console.error('Backtest failed:', error);
+      toast.error('Backtest failed. Please check your settings and try again.');
     }
     setLoading(false);
   };

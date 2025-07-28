@@ -46,32 +46,9 @@ function Controls({ ticker, setTicker, onRunBacktest, loading }) {
     onRunBacktest(params);
   };
 
-  // Debug function
-  const runDebug = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/api/backtest-debug', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ticker: ticker,
-          event_types: eventTypes,
-          window_before: windowBefore,
-          window_after: windowAfter,
-        }),
-      });
-      const data = await response.json();
-      console.log('Debug info:', data);
-      alert('Check console for debug info!');
-    } catch (error) {
-      console.error('Debug error:', error);
-    }
-  };
-
   return (
     <div className="controls">
-      <h3>🎯 Backtest Configuration</h3>
+      <h3>Configuration</h3>
       <form onSubmit={handleSubmit}>
         {/* Ticker Input */}
         <div className="control-group">
@@ -87,7 +64,7 @@ function Controls({ ticker, setTicker, onRunBacktest, loading }) {
 
         {/* Event Types Selection */}
         <div className="control-group">
-          <label>Event Types (Multi-select)</label>
+          <label>Event Types</label>
           <div className="event-types-grid">
             {allEventTypes.map(event => (
               <label key={event.value} className="checkbox-label">
@@ -104,7 +81,7 @@ function Controls({ ticker, setTicker, onRunBacktest, loading }) {
 
         {/* Time Windows */}
         <div className="control-group">
-          <label>Entry Window: {windowBefore} days before</label>
+          <label>Entry: {windowBefore} days before</label>
           <input
             type="range"
             min="1"
@@ -116,7 +93,7 @@ function Controls({ ticker, setTicker, onRunBacktest, loading }) {
         </div>
 
         <div className="control-group">
-          <label>Exit Window: {windowAfter} days after</label>
+          <label>Exit: {windowAfter} days after</label>
           <input
             type="range"
             min="1"
@@ -206,7 +183,7 @@ function Controls({ ticker, setTicker, onRunBacktest, loading }) {
             </label>
             {useSentiment && (
               <div className="sub-control">
-                <label>Min Sentiment Score: {sentimentThreshold}</label>
+                <label>Min Sentiment: {sentimentThreshold.toFixed(1)}</label>
                 <input
                   type="range"
                   min="-1"
@@ -214,13 +191,8 @@ function Controls({ ticker, setTicker, onRunBacktest, loading }) {
                   step="0.1"
                   value={sentimentThreshold}
                   onChange={(e) => setSentimentThreshold(parseFloat(e.target.value))}
-                  className="slider sentiment-slider"
+                  className="slider"
                 />
-                <div className="slider-labels">
-                  <span>Bearish</span>
-                  <span>Neutral</span>
-                  <span>Bullish</span>
-                </div>
               </div>
             )}
           </div>
@@ -233,13 +205,8 @@ function Controls({ ticker, setTicker, onRunBacktest, loading }) {
               <span className="spinner"></span> Running Analysis...
             </span>
           ) : (
-            <span>🚀 Run Backtest</span>
+            <span>Run Backtest</span>
           )}
-        </button>
-
-        {/* Debug Button */}
-        <button type="button" onClick={runDebug} className="submit-btn" style={{ marginTop: '10px', background: '#ff6600' }}>
-          🐛 Debug Backtest
         </button>
 
         {eventTypes.length === 0 && (
