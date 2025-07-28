@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Controls from './Controls';
-import Charts from './Charts';
-import LivePriceDisplay from './LivePriceDisplay';
+import LeftPanel from './LeftPanel';
+import CenterPanel from './CenterPanel';
+import RightPanel from './RightPanel';
 import api from '../api';
 import { toast } from 'react-toastify';
 
-function Dashboard() {
+function Dashboard({ activeTab }) {
   const [ticker, setTicker] = useState('AAPL');
   const [backtestData, setBacktestData] = useState(null);
   const [liveData, setLiveData] = useState(null);
@@ -60,7 +60,7 @@ function Dashboard() {
       if (response.data.overall_metrics && response.data.overall_metrics.total_events > 0) {
         const metrics = response.data.overall_metrics;
         toast.success(
-          `Backtest completed! ${metrics.total_events} events analyzed with ${(metrics.win_rate * 100).toFixed(1)}% win rate`,
+          `✓ Analyzed ${metrics.total_events} events • ${(metrics.win_rate * 100).toFixed(1)}% win rate • ${(metrics.avg_return * 100).toFixed(2)}% avg return`,
           { autoClose: 5000 }
         );
       } else {
@@ -75,22 +75,23 @@ function Dashboard() {
 
   return (
     <div className="dashboard">
-      <div className="controls-panel">
-        <LivePriceDisplay ticker={ticker} liveData={liveData} />
-        <Controls 
-          ticker={ticker}
-          setTicker={setTicker}
-          onRunBacktest={runBacktest}
-          loading={loading}
-        />
-      </div>
-      <div className="charts-panel">
-        <Charts 
-          backtestData={backtestData}
-          liveData={liveData}
-          ticker={ticker}
-        />
-      </div>
+      <LeftPanel 
+        ticker={ticker}
+        setTicker={setTicker}
+        liveData={liveData}
+        onRunBacktest={runBacktest}
+        loading={loading}
+      />
+      <CenterPanel 
+        backtestData={backtestData}
+        liveData={liveData}
+        ticker={ticker}
+        loading={loading}
+      />
+      <RightPanel 
+        backtestData={backtestData}
+        ticker={ticker}
+      />
     </div>
   );
 }
