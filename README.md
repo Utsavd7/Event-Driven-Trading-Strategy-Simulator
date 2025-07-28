@@ -23,6 +23,13 @@ A professional-grade quantitative backtesting platform with real-time market dat
 - **Caching System**: Redis-based caching for API optimization
 - **Error Handling**: Graceful fallbacks and comprehensive error management
 
+## 📸 Screenshots
+
+<p align="center">
+<img src="frontend/screenshot/screenshot1.png" width="49%" alt="Event Analysis View">
+<img src="frontend/screenshot/screenshot2.png" width="49%" alt="Overview Dashboard">
+</p>
+
 ## 📊 Mathematical Formulas
 
 ### 1. **Return Calculation**
@@ -99,7 +106,13 @@ cd event-strategy-simulator
 ```
 
 ### 2. Set Up Environment Variables
-Create a `.env` file in the root directory:
+Copy the example environment file and add your API keys:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your API keys:
 
 ```env
 # Required API Keys (all have free tiers)
@@ -144,7 +157,6 @@ npm start
 ```
 
 The application will open at `http://localhost:3000`
-
 
 ## 🔧 Configuration Options
 
