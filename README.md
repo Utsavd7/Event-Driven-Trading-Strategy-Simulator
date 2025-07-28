@@ -26,8 +26,8 @@ A professional-grade quantitative backtesting platform with real-time market dat
 ## 📸 Screenshots
 
 <p align="center">
-<img src="frontend/screenshot/screenshot1.png" width="49%" alt="Event Analysis View">
-<img src="frontend/screenshot/screenshot2.png" width="49%" alt="Overview Dashboard">
+<img src="/frontend/screenshot/screenshot1.png" width="49%" alt="Event Analysis View">
+<img src="/frontend/screenshot/screenshot2.png" width="49%" alt="Overview Dashboard">
 </p>
 
 ## 📊 Mathematical Formulas
