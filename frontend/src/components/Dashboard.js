@@ -1,96 +1,131 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import LeftPanel from './LeftPanel';
 import CenterPanel from './CenterPanel';
 import RightPanel from './RightPanel';
+import AIPanel from './AIPanel';
 import api from '../api';
 import { toast } from 'react-toastify';
 
 function Dashboard({ activeTab }) {
-  const [ticker, setTicker] = useState('AAPL');
+  const [ticker, setTicker] = useState('RELIANCE');
+  const [stockData, setStockData] = useState(null);
+  const [technicals, setTechnicals] = useState(null);
+  const [financials, setFinancials] = useState(null);
   const [backtestData, setBacktestData] = useState(null);
-  const [liveData, setLiveData] = useState(null);
+  const [aiNarrative, setAiNarrative] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [techLoading, setTechLoading] = useState(false);
   const [ws, setWs] = useState(null);
 
-  // Connect WebSocket for live prices
-  useEffect(() => {
-    if (ticker) {
-      // Close existing connection
-      if (ws) {
-        ws.close();
-      }
+  // Fetch all stock data when ticker changes
+  const fetchStockData = useCallback(async (t) => {
+    if (!t) return;
+    setStockLoading(true);
+    setTechnicals(null);
+    setFinancials(null);
+    try {
+      const [stockRes, techRes, finRes] = await Promise.allSettled([
+        api.getStock(t),
+        api.getTechnicals(t),
+        api.getFinancials(t),
+      ]);
+      if (stockRes.status === 'fulfilled') setStockData(stockRes.value.data);
+      if (techRes.status === 'fulfilled') setTechnicals(techRes.value.data);
+      if (finRes.status === 'fulfilled') setFinancials(finRes.value.data);
+    } catch (err) {
+      console.error('Stock fetch error:', err);
+    }
+    setStockLoading(false);
+  }, []);
 
-      const websocket = api.connectWebSocket(ticker);
-      
-      websocket.onmessage = (event) => {
+  useEffect(() => {
+    setTechLoading(true);
+    fetchStockData(ticker).finally(() => setTechLoading(false));
+  }, [ticker, fetchStockData]);
+
+  // WebSocket for live price updates
+  useEffect(() => {
+    if (ws) ws.close();
+    const websocket = api.connectWebSocket(ticker);
+    websocket.onmessage = (event) => {
+      try {
         const data = JSON.parse(event.data);
         if (data.type === 'price_update') {
-          setLiveData(prev => ({ ...prev, quote: data.data }));
+          setStockData(prev => prev ? {
+            ...prev,
+            quote: { ...prev.quote, ...data.data }
+          } : prev);
         }
-      };
-
-      websocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-      setWs(websocket);
-      return () => websocket.close();
-    }
-  }, [ticker]);
-
-  // Fetch initial live data
-  useEffect(() => {
-    if (ticker) {
-      api.getLiveData(ticker)
-        .then(res => setLiveData(res.data))
-        .catch(err => console.error('Error fetching live data:', err));
-    }
-  }, [ticker]);
+      } catch (_) {}
+    };
+    websocket.onerror = () => {};
+    setWs(websocket);
+    return () => websocket.close();
+  }, [ticker]); // ws excluded intentionally
 
   const runBacktest = async (params) => {
     setLoading(true);
+    setAiNarrative(null);
     try {
-      const response = await api.runBacktest({
-        ticker,
-        ...params
-      });
-      setBacktestData(response.data);
-      
-      // Show success message with summary
-      if (response.data.overall_metrics && response.data.overall_metrics.total_events > 0) {
-        const metrics = response.data.overall_metrics;
+      const res = await api.runBacktest({ ticker, ...params });
+      setBacktestData(res.data);
+      const m = res.data.overall_metrics;
+      if (m?.total_events > 0) {
         toast.success(
-          `✓ Analyzed ${metrics.total_events} events • ${(metrics.win_rate * 100).toFixed(1)}% win rate • ${(metrics.avg_return * 100).toFixed(2)}% avg return`,
+          `✓ ${m.total_events} events · ${(m.win_rate * 100).toFixed(1)}% win rate · ${(m.avg_return * 100).toFixed(2)}% avg return`,
           { autoClose: 5000 }
         );
+        // AI narrative in background
+        api.getBacktestNarrative(res.data, ticker)
+          .then(r => setAiNarrative(r.data.narrative))
+          .catch(() => {});
       } else {
         toast.warning('No events found for the selected criteria');
       }
-    } catch (error) {
-      console.error('Backtest failed:', error);
-      toast.error('Backtest failed. Please check your settings and try again.');
+    } catch (err) {
+      toast.error('Backtest failed. Please try again.');
     }
     setLoading(false);
   };
 
+  if (activeTab === 'ai') {
+    return (
+      <div className="dashboard ai-full">
+        <AIPanel backtestData={backtestData} stockData={stockData} ticker={ticker} />
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard">
-      <LeftPanel 
+      <LeftPanel
         ticker={ticker}
         setTicker={setTicker}
-        liveData={liveData}
+        stockData={stockData}
+        stockLoading={stockLoading}
+        onRunBacktest={activeTab === 'backtest' ? runBacktest : null}
+        loading={loading}
+        activeTab={activeTab}
+      />
+      <CenterPanel
+        ticker={ticker}
+        stockData={stockData}
+        technicals={technicals}
+        financials={financials}
+        backtestData={backtestData}
+        aiNarrative={aiNarrative}
+        loading={loading}
+        stockLoading={stockLoading}
+        techLoading={techLoading}
+        activeTab={activeTab}
         onRunBacktest={runBacktest}
-        loading={loading}
       />
-      <CenterPanel 
-        backtestData={backtestData}
-        liveData={liveData}
-        ticker={ticker}
-        loading={loading}
-      />
-      <RightPanel 
+      <RightPanel
+        stockData={stockData}
         backtestData={backtestData}
         ticker={ticker}
+        activeTab={activeTab}
       />
     </div>
   );

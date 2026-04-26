@@ -1,320 +1,219 @@
-# Event-Driven Trading Strategy Simulator 📈
+# QuantIQ India
 
-A professional-grade quantitative backtesting platform with real-time market data integration, designed for analyzing event-driven trading strategies. Built with React, FastAPI, and modern financial APIs.
+A professional Indian equity market analysis and event-driven backtesting platform. Search any NSE stock, get live prices, technical indicators, financials, and run AI-powered event-driven backtests — all with **no paid API keys required for market data**.
 
-![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
-![React](https://img.shields.io/badge/react-18.0+-61DAFB.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![React](https://img.shields.io/badge/react-18+-61DAFB.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-## 🌟 Features
-
-### Core Functionality
-- **Real-Time Market Data**: Live price updates via WebSocket connections
-- **Multi-Event Backtesting**: Test strategies across earnings, Fed meetings, dividends, FDA approvals, product launches, and M&A events
-- **Risk Management**: Configurable stop-loss and take-profit orders
-- **Sentiment Analysis**: Integration with news and social media sentiment
-- **Professional UI**: Bloomberg Terminal-inspired dark theme with responsive design
-
-### Technical Features
-- **High-Performance Backtesting**: Vectorized calculations using NumPy/Pandas
-- **Multiple Data Sources**: Finnhub, Tiingo, Alpha Vantage, Polygon.io integration
-- **WebSocket Support**: Real-time price streaming
-- **Caching System**: Redis-based caching for API optimization
-- **Error Handling**: Graceful fallbacks and comprehensive error management
-
-## 📸 Screenshots
-
 <p align="center">
-<img src="screenshot/screenshot1.png" width="49%" alt="Event Analysis View">
-<img src="screenshot/screenshot2.png" width="49%" alt="Overview Dashboard">
+<img src="screenshot/screenshot1.png" width="49%" alt="Analysis View">
+<img src="screenshot/screenshot2.png" width="49%" alt="Backtest View">
 </p>
 
-## 📊 Mathematical Formulas
+---
 
-### 1. **Return Calculation**
-```
-Total Return = (Exit Price - Entry Price) / Entry Price
+## Features
 
-Where:
-- Entry Price = Close price at (Event Date - Window Before)
-- Exit Price = Close price at (Event Date + Window After)
-```
+### Analysis Tab
+- Live NSE quotes via the NSE unofficial API (30-second refresh)
+- OHLC, volume, 52-week range with position indicator
+- P/E, P/B, ROE, dividend yield, market cap in Crores
+- Latest news with VADER sentiment badges (Positive / Neutral / Negative)
+- Analyst consensus and target price
 
-### 2. **Sharpe Ratio**
-```
-Sharpe Ratio = √252 × (Mean(Returns) - Risk-Free Rate) / StdDev(Returns)
+### Technicals Tab
+- 1-year candlestick or line chart with SMA 20/50/200 overlays
+- Bollinger Bands (20-period, 2σ)
+- RSI (14), MACD (12, 26, 9), Volume with MA20
+- Signal badges: RSI state · MACD direction · Trend · Overall composite
 
-Where:
-- 252 = Trading days per year
-- Risk-Free Rate = 0.02 (2% annual)
-```
+### Financials Tab
+- Quarterly Revenue & PAT bar charts in ₹ Crore
+- Annual Revenue & PAT (last 4 fiscal years)
+- Key ratios table: P/E, P/B, ROE, Debt/Equity, EPS, margins
 
-### 3. **Sortino Ratio** (Penalizes downside volatility only)
-```
-Sortino Ratio = √252 × (Mean(Returns) - Risk-Free Rate) / Downside Deviation
+### Events Tab
+- Upcoming earnings season, RBI MPC meeting dates, Union Budget
+- Actual historical RBI MPC dates (2022–2025) for accurate backtesting
 
-Where:
-- Downside Deviation = StdDev(Returns[Returns < 0])
-```
+### Backtest Tab
+- Event types: Quarterly Results, RBI Policy, Union Budget, Dividend
+- Entry/exit window sliders (1–10 days)
+- Stop-loss and take-profit toggles
+- Preset strategies: Conservative / Aggressive / Multi-Event
+- Metrics: Win rate, Avg return, Sharpe, Sortino, Max drawdown, VaR 95%, Profit factor
+- Cumulative return chart, per-event bar chart, individual trade scatter
 
-### 4. **Maximum Drawdown**
-```
-Max Drawdown = Min((Cumulative Return - Running Maximum) / Running Maximum)
+### AI Intel Tab (requires free Groq key)
+- **Strategy Chat**: Streaming conversation with Llama 3.3 70B with full backtest context
+- **Research Agent**: Multi-step agentic pipeline — fundamentals → news sentiment → technicals → trade thesis with Overall Score and Signal
+- Understands Indian market context: RBI stance, FII/DII flows, SEBI, NSE/BSE, ₹ formatting, Indian fiscal year
 
-Where:
-- Cumulative Return = Product(1 + Daily Returns)
-- Running Maximum = Maximum value up to current point
-```
+### Market Bar
+- Live NIFTY 50, BANK NIFTY, MIDCAP 100, VIX from NSE's own indices API
 
-### 5. **Value at Risk (VaR) - 95% Confidence**
-```
-VaR₉₅ = 5th Percentile of Return Distribution
-```
+---
 
-### 6. **Conditional Value at Risk (CVaR)**
-```
-CVaR₉₅ = Mean(Returns | Returns ≤ VaR₉₅)
-```
+## Data Sources
 
-### 7. **Profit Factor**
-```
-Profit Factor = Sum(Positive Returns) / |Sum(Negative Returns)|
-```
+| Source | What it provides | API Key? |
+|--------|-----------------|----------|
+| NSE unofficial API | Live quotes, indices | None |
+| yfinance (.NS suffix) | Historical OHLCV, fundamentals, news | None |
+| Groq (Llama 3.3 70B) | AI chat, narrative, research agent | Free at console.groq.com |
 
-### 8. **Win Rate**
-```
-Win Rate = Count(Returns > 0) / Total Count(Returns)
-```
+Market data fetching priority:
+1. NSE API for live price (30-s TTL)
+2. yfinance `fast_info` for 52-week range, market cap
+3. yfinance `t.info` for fundamentals (cached 1 hr to avoid rate limits)
+4. Graceful partial-data fallback: app always shows price even if fundamentals are delayed
 
-### 9. **Volatility (Annualized)**
-```
-Volatility = StdDev(Daily Returns) × √252
-```
+---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-- Python 3.9+
-- Node.js 16+
-- Redis (optional, for caching)
+- Python 3.11+
+- Node.js 18+
 
-### 1. Clone the Repository
+### 1. Clone
+
 ```bash
-git clone https://github.com/yourusername/event-strategy-simulator.git
-cd event-strategy-simulator
+git clone https://github.com/Utsavd7/QuantIQ.git
+cd QuantIQ
 ```
 
-### 2. Set Up Environment Variables
-Copy the example environment file and add your API keys:
+### 2. Environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your API keys:
+Open `.env` and add your free Groq key (get one at [console.groq.com](https://console.groq.com) — no credit card):
 
 ```env
-# Required API Keys (all have free tiers)
-FINNHUB_API_KEY=your_finnhub_key_here
-TIINGO_API_KEY=your_tiingo_key_here
-
-# Optional but Recommended
-ALPHA_VANTAGE_KEY=your_alpha_vantage_key
-POLYGON_API_KEY=your_polygon_key
-NEWS_API_KEY=your_newsapi_key
-REDDIT_CLIENT_ID=your_reddit_client_id
-REDDIT_CLIENT_SECRET=your_reddit_secret
-
-# Optional - Alternative Data Sources
-IEX_CLOUD_KEY=your_iex_key
+GROQ_API_KEY=gsk_your_key_here
 ```
 
-### 3. Backend Setup
+Market data (NSE + yfinance) requires **no API key**.
+
+### 3. Backend
+
 ```bash
 cd backend
 python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Mac/Linux
-source venv/bin/activate
-
-# Install dependencies
+source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-# Run the server
 uvicorn app:app --reload --port 8000
 ```
 
-### 4. Frontend Setup
+### 4. Frontend
+
 ```bash
-# In a new terminal
 cd frontend
 npm install
 npm start
 ```
 
-The application will open at `http://localhost:3000`
+Open [http://localhost:3000](http://localhost:3000).
 
-## 🔧 Configuration Options
+---
 
-### Strategy Parameters
-- **Event Types**: `earnings`, `fed`, `dividend`, `fda`, `product_launch`, `merger`
-- **Window Before**: Days to enter position before event (1-10)
-- **Window After**: Days to exit position after event (1-10)
-- **Stop Loss**: Optional percentage stop loss (0-20%)
-- **Take Profit**: Optional percentage take profit (0-50%)
-- **Sentiment Filter**: Filter trades by news sentiment threshold
+## API Reference
 
-### Preset Strategies
-1. **Conservative**: Single event type, moderate windows, no stop/take profit
-2. **Day Trade**: Multiple events, tight windows, aggressive risk management
-3. **Momentum**: Extended windows with sentiment filtering
+### Market Data
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/indices` | Live NIFTY 50, BANK NIFTY, MIDCAP 100, VIX |
+| GET | `/api/stock/{ticker}` | Quote + fundamentals + news |
+| GET | `/api/technicals/{ticker}` | OHLCV + SMA/MACD/RSI/BB signals |
+| GET | `/api/financials/{ticker}` | Quarterly/annual P&L in ₹ Cr |
+| GET | `/api/search?q={query}` | Symbol/name search |
+| GET | `/api/sector/{sector}` | Stocks in IT/Banking/Auto/etc. |
+| WS  | `/ws/{ticker}` | WebSocket live price stream |
 
-## 🔌 API Endpoints
+### Backtest
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/backtest` | Run event-driven backtest |
 
-### REST Endpoints
-- `GET /` - Health check
-- `GET /api/live/{ticker}` - Get live quote and company info
-- `POST /api/backtest` - Run backtest with parameters
-- `GET /api/events/{ticker}` - Get historical events
-- `GET /api/sentiment/{ticker}` - Get current sentiment
-
-### WebSocket
-- `WS /ws/{ticker}` - Real-time price updates
-
-### Request Example
 ```json
-POST /api/backtest
 {
-  "ticker": "AAPL",
-  "event_types": ["earnings", "fed"],
+  "ticker": "RELIANCE",
+  "event_types": ["earnings", "rbi"],
   "window_before": 2,
   "window_after": 3,
-  "use_sentiment": true,
-  "sentiment_threshold": 0.1,
   "stop_loss": 0.05,
   "take_profit": 0.10
 }
 ```
 
-## 📈 Data Sources
-
-### Free Tier Limits
-1. **Finnhub** (60 calls/min) - Real-time quotes, earnings calendar
-2. **Tiingo** (500 calls/hour) - Historical prices
-3. **Alpha Vantage** (5 calls/min) - Backup price data
-4. **NewsAPI** (100 calls/day) - News sentiment
-5. **Polygon** (5 calls/min) - Market data
-
-### Data Priority
-1. Try Finnhub first (best free tier)
-2. Fall back to Tiingo for historical data
-3. Use Alpha Vantage as backup
-4. Mock data for development/testing
-
-## 🎨 UI Features
-
-### Professional Trading Interface
-- **Dark Theme**: Bloomberg Terminal-inspired design
-- **Real-Time Updates**: Live price ticker with WebSocket
-- **Interactive Charts**: Plotly.js visualizations
-- **Responsive Design**: Mobile and tablet optimized
-- **Accessibility**: WCAG compliant with keyboard navigation
-
-### Key Components
-1. **Ticker Search**: Autocomplete with popular symbols
-2. **Price Display**: Real-time quote with daily stats
-3. **Strategy Builder**: Visual configuration interface
-4. **Results Dashboard**: Performance metrics and trade analysis
-5. **Risk Analytics**: Drawdown, VaR, and Sharpe visualization
-
-## 🧪 Testing
-
-### Run Tests
-```bash
-# Backend tests
-cd backend
-pytest tests/
-
-# Frontend tests
-cd frontend
-npm test
-```
-
-### Performance Benchmarks
-- Backtest 2 years of data: ~2-3 seconds
-- WebSocket latency: <100ms
-- UI render time: <16ms (60 FPS)
-
-## 🚨 Error Handling
-
-### Common Issues
-
-1. **No Data Returned**
-   - Check API keys in `.env`
-   - Verify ticker symbol is valid
-   - Check rate limits
-
-2. **WebSocket Connection Failed**
-   - Ensure backend is running on port 8000
-   - Check CORS settings
-   - Verify WebSocket URL
-
-3. **Slow Performance**
-   - Enable Redis caching
-   - Reduce backtest period
-   - Check API rate limits
-
-## 📚 Advanced Usage
-
-### Custom Event Types
-Add new event types in `backend/backtest.py`:
-
-```python
-def _get_custom_events(self, ticker, start_date, end_date):
-    # Your custom event logic
-    return [{'date': '2024-01-15', 'type': 'custom'}]
-```
-
-### Extend Risk Metrics
-Add new metrics in `calculate_metrics()`:
-
-```python
-# Example: Calmar Ratio
-calmar_ratio = annual_return / abs(max_drawdown)
-```
-
-### Custom Data Sources
-Implement new provider in `data_provider.py`:
-
-```python
-def get_custom_data(ticker):
-    # Your data fetching logic
-    return price_data
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Financial data provided by Finnhub, Tiingo, Alpha Vantage
-- UI inspired by Bloomberg Terminal and TradingView
-- Built for quantitative finance education and research
-
+### AI (requires GROQ_API_KEY)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/ai/chat` | Streaming chat (SSE) |
+| POST | `/api/ai/backtest-narrative` | One-shot backtest analysis |
+| GET  | `/api/ai/research/{ticker}` | Agentic research pipeline (SSE) |
 
 ---
 
-**Disclaimer**: This software is for educational purposes only. Not financial advice. Always do your own research before making investment decisions.
+## Strategy Metrics
+
+| Metric | Formula |
+|--------|---------|
+| Return | `(Exit − Entry) / Entry` |
+| Sharpe | `√252 × (mean(R) − 6.5%) / std(R)` |
+| Sortino | `√252 × (mean(R) − 6.5%) / downside_std(R)` |
+| Max Drawdown | `min((cumR − runningMax) / runningMax)` |
+| VaR 95% | `5th percentile of return distribution` |
+| Profit Factor | `Σ wins / |Σ losses|` |
+
+Risk-free rate is **6.5%** (Indian 10-year G-Sec yield).
+
+---
+
+## Project Structure
+
+```
+.
+├── backend/
+│   ├── app.py               # FastAPI routes
+│   ├── indian_market.py     # NSE/yfinance data layer, event dates
+│   ├── ai_service.py        # Groq streaming chat + research agent
+│   ├── ml_signals.py        # RandomForest + GMM regime detection
+│   └── requirements.txt
+├── frontend/
+│   └── src/
+│       ├── components/
+│       │   ├── Dashboard.js     # Layout + data fetching
+│       │   ├── LeftPanel.js     # Search, price card, backtest controls
+│       │   ├── CenterPanel.js   # Overview/Technicals/Financials/Backtest tabs
+│       │   ├── RightPanel.js    # Stats sidebar
+│       │   └── AIPanel.js       # Chat + Research Agent
+│       └── api.js
+└── .env.example
+```
+
+---
+
+## Supported Tickers
+
+Any NSE-listed stock by symbol (e.g. `RELIANCE`, `TCS`, `ZOMATO`). Common aliases are also handled:
+
+| Input | Resolves to |
+|-------|------------|
+| `SBI` | `SBIN` |
+| `L&T` | `LT` |
+| `HUL` | `HINDUNILVR` |
+| `KOTAK` | `KOTAKBANK` |
+| `AIRTEL` | `BHARTIARTL` |
+
+NIFTY 50 quick-picks and sector browser (IT, Banking, Auto, Pharma, Energy, FMCG) available in the left panel.
+
+---
+
+## Disclaimer
+
+For educational and research purposes only. Not financial advice. Past backtest performance does not guarantee future results.

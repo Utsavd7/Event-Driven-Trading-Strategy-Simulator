@@ -1,177 +1,236 @@
 import React from 'react';
 
-function RightPanel({ backtestData, ticker }) {
-  if (!backtestData) {
+function fmtPct(v) {
+  if (v == null) return '—';
+  return `${(v * 100).toFixed(2)}%`;
+}
+function fmtNum(v, d = 2) {
+  if (v == null) return '—';
+  return v.toFixed(d);
+}
+function fmtINR(v) {
+  if (!v) return '—';
+  if (v >= 1e7) return `₹${(v / 1e7).toFixed(1)} Cr`;
+  if (v >= 1e5) return `₹${(v / 1e5).toFixed(1)} L`;
+  return `₹${v.toFixed(2)}`;
+}
+
+function StatRow({ label, value, color }) {
+  return (
+    <div className="rp-stat-row">
+      <span className="rp-stat-label">{label}</span>
+      <span className="rp-stat-val" style={color ? { color } : {}}>{value}</span>
+    </div>
+  );
+}
+
+function RightPanel({ stockData, backtestData, ticker, activeTab }) {
+  const isBT = activeTab === 'backtest';
+  const q = stockData?.quote || {};
+  const f = stockData?.fundamentals || {};
+
+  if (isBT) {
+    if (!backtestData) {
+      return (
+        <div className="right-panel">
+          <div className="rp-header">
+            <div className="rp-title">Backtest Summary</div>
+            <div className="rp-subtitle">{ticker}</div>
+          </div>
+          <div className="rp-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/>
+              <path d="M15 3v16a2 2 0 002 2h2a2 2 0 002-2V3a2 2 0 00-2-2h-2a2 2 0 00-2 2z"/>
+            </svg>
+            <p>Run a backtest to see results</p>
+          </div>
+        </div>
+      );
+    }
+
+    const { overall_metrics: m = {}, event_returns = [], metrics_by_event = {} } = backtestData;
+    const sorted = [...event_returns].sort((a, b) => (b.total_return || 0) - (a.total_return || 0));
+    const top5 = sorted.slice(0, 5);
+    const worst5 = sorted.slice(-5).reverse();
+
     return (
       <div className="right-panel">
-        <div className="results-header">
-          <h3 className="results-title">Results</h3>
-          <p className="results-subtitle">Run a backtest to see results</p>
+        <div className="rp-header">
+          <div className="rp-title">Backtest Summary</div>
+          <div className="rp-subtitle">{ticker} · {m.total_events} events</div>
         </div>
-        <div className="results-content">
-          <div className="empty-state" style={{ height: '200px' }}>
-            <svg className="empty-icon" viewBox="0 0 20 20" fill="currentColor" style={{ width: '48px', height: '48px' }}>
-              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-            </svg>
-            <p className="empty-text">No results yet</p>
-          </div>
+
+        <div className="rp-section">
+          <div className="rp-section-title">Performance</div>
+          <StatRow label="Win Rate" value={fmtPct(m.win_rate)}
+            color={m.win_rate > 0.55 ? '#00b386' : '#e8433f'} />
+          <StatRow label="Avg Return" value={fmtPct(m.avg_return)}
+            color={(m.avg_return || 0) >= 0 ? '#00b386' : '#e8433f'} />
+          <StatRow label="Avg Win" value={fmtPct(m.avg_win)} color="#00b386" />
+          <StatRow label="Avg Loss" value={fmtPct(m.avg_loss)} color="#e8433f" />
+          <StatRow label="Best Trade" value={fmtPct(m.best_trade)} color="#00b386" />
+          <StatRow label="Worst Trade" value={fmtPct(m.worst_trade)} color="#e8433f" />
+        </div>
+
+        <div className="rp-divider" />
+
+        <div className="rp-section">
+          <div className="rp-section-title">Risk Metrics</div>
+          <StatRow label="Sharpe" value={fmtNum(m.sharpe)}
+            color={m.sharpe > 1.5 ? '#00b386' : m.sharpe > 0.5 ? '#ff9800' : '#e8433f'} />
+          <StatRow label="Sortino" value={fmtNum(m.sortino)} />
+          <StatRow label="Max Drawdown" value={fmtPct(m.max_drawdown)} color="#e8433f" />
+          <StatRow label="VaR (95%)" value={fmtPct(m.var_95)} color="#ff9800" />
+          <StatRow label="Profit Factor" value={fmtNum(m.profit_factor)}
+            color={m.profit_factor > 1.5 ? '#00b386' : m.profit_factor > 1 ? '#ff9800' : '#e8433f'} />
+        </div>
+
+        {Object.keys(metrics_by_event).length > 0 && (
+          <>
+            <div className="rp-divider" />
+            <div className="rp-section">
+              <div className="rp-section-title">By Event Type</div>
+              {Object.entries(metrics_by_event).map(([etype, em]) => (
+                <div key={etype} className="rp-event-row">
+                  <span className="rp-event-type">{etype}</span>
+                  <div className="rp-event-stats">
+                    <span>{em.total_events} trades</span>
+                    <span style={{ color: (em.avg_return || 0) >= 0 ? '#00b386' : '#e8433f' }}>
+                      {fmtPct(em.avg_return)}
+                    </span>
+                    <span style={{ color: '#787b86' }}>WR {fmtPct(em.win_rate)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="rp-divider" />
+
+        <div className="rp-section">
+          <div className="rp-section-title">Top 5 Trades</div>
+          {top5.map((t, i) => (
+            <div key={i} className="rp-trade-row">
+              <div className="rp-trade-date">
+                {new Date(t.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
+                <span className="rp-trade-type">{t.event_type}</span>
+              </div>
+              <span className="rp-trade-ret" style={{ color: '#00b386' }}>
+                +{fmtPct(t.total_return)}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="rp-divider" />
+
+        <div className="rp-section">
+          <div className="rp-section-title">Worst 5 Trades</div>
+          {worst5.map((t, i) => (
+            <div key={i} className="rp-trade-row">
+              <div className="rp-trade-date">
+                {new Date(t.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
+                <span className="rp-trade-type">{t.event_type}</span>
+              </div>
+              <span className="rp-trade-ret" style={{ color: '#e8433f' }}>
+                {fmtPct(t.total_return)}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  const { overall_metrics = {}, event_returns = [] } = backtestData;
-
-  // Get top trades
-  const sortedReturns = [...event_returns].sort((a, b) => b.total_return - a.total_return);
-  const topTrades = sortedReturns.slice(0, 5);
-  const worstTrades = sortedReturns.slice(-5).reverse();
-
-  const formatPercent = (value) => {
-    if (value === undefined || value === null) return '0.00%';
-    return `${(value * 100).toFixed(2)}%`;
-  };
-
-  const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '$0.00';
-    return `$${value.toFixed(2)}`;
-  };
-
+  // Analysis mode — show live stock details
   return (
     <div className="right-panel">
-      <div className="results-header">
-        <h3 className="results-title">Strategy Results</h3>
-        <p className="results-subtitle">{ticker} • {overall_metrics.total_events} events</p>
+      <div className="rp-header">
+        <div className="rp-title">Stock Details</div>
+        <div className="rp-subtitle">{ticker} · NSE</div>
       </div>
 
-      <div className="results-content">
-        <div className="performance-summary">
-          <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-primary)' }}>
-            Performance Summary
-          </h4>
-          
-          <div className="summary-row">
-            <span className="summary-label">Total Return</span>
-            <span className="summary-value" style={{ 
-              color: (overall_metrics.avg_return * overall_metrics.total_events) > 0 ? 'var(--accent-green)' : 'var(--accent-red)' 
-            }}>
-              {formatPercent(overall_metrics.avg_return * overall_metrics.total_events)}
-            </span>
-          </div>
-
-          <div className="summary-row">
-            <span className="summary-label">Average Win</span>
-            <span className="summary-value" style={{ color: 'var(--accent-green)' }}>
-              {formatPercent(overall_metrics.avg_win)}
-            </span>
-          </div>
-
-          <div className="summary-row">
-            <span className="summary-label">Average Loss</span>
-            <span className="summary-value" style={{ color: 'var(--accent-red)' }}>
-              {formatPercent(overall_metrics.avg_loss)}
-            </span>
-          </div>
-
-          <div className="summary-row">
-            <span className="summary-label">Best Trade</span>
-            <span className="summary-value" style={{ color: 'var(--accent-green)' }}>
-              {formatPercent(overall_metrics.best_trade)}
-            </span>
-          </div>
-
-          <div className="summary-row">
-            <span className="summary-label">Worst Trade</span>
-            <span className="summary-value" style={{ color: 'var(--accent-red)' }}>
-              {formatPercent(overall_metrics.worst_trade)}
-            </span>
-          </div>
-
-          <div className="summary-row">
-            <span className="summary-label">Avg Volatility</span>
-            <span className="summary-value">
-              {formatPercent(overall_metrics.avg_volatility)}
-            </span>
-          </div>
+      {!stockData ? (
+        <div className="rp-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <p>Search for a stock</p>
         </div>
+      ) : (
+        <>
+          <div className="rp-section">
+            <div className="rp-section-title">Price Info</div>
+            <StatRow label="Current" value={`₹${q.current?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`} />
+            <StatRow label="Change" value={`${(q.change_pct || 0) >= 0 ? '+' : ''}${(q.change_pct || 0).toFixed(2)}%`}
+              color={(q.change_pct || 0) >= 0 ? '#00b386' : '#e8433f'} />
+            <StatRow label="Open" value={`₹${q.open?.toFixed(2)}`} />
+            <StatRow label="High" value={`₹${q.high?.toFixed(2)}`} color="#00b386" />
+            <StatRow label="Low" value={`₹${q.low?.toFixed(2)}`} color="#e8433f" />
+            <StatRow label="Prev Close" value={`₹${q.previous_close?.toFixed(2)}`} />
+            {q.volume > 0 && <StatRow label="Volume" value={q.volume?.toLocaleString('en-IN')} />}
+          </div>
 
-        <div className="trade-list">
-          <h4 style={{ 
-            fontSize: '14px', 
-            fontWeight: '600', 
-            marginBottom: '16px', 
-            color: 'var(--text-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
-              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-            </svg>
-            Top Performing Trades
-          </h4>
-          
-          {topTrades.map((trade, idx) => (
-            <div key={idx} className="trade-item">
-              <div className="trade-header">
-                <span className="trade-date">
-                  {new Date(trade.date).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </span>
-                <span className="trade-return" style={{ color: 'var(--accent-green)' }}>
-                  +{formatPercent(trade.total_return)}
-                </span>
+          {f['52w_high'] && (
+            <>
+              <div className="rp-divider" />
+              <div className="rp-section">
+                <div className="rp-section-title">52-Week Range</div>
+                <StatRow label="High" value={`₹${f['52w_high']?.toLocaleString('en-IN')}`} color="#00b386" />
+                <StatRow label="Low" value={`₹${f['52w_low']?.toLocaleString('en-IN')}`} color="#e8433f" />
+                <StatRow label="Position" value={`${f['52w_position']?.toFixed(0)}%`} />
               </div>
-              <div className="trade-details">
-                <span>{trade.event_type}</span>
-                <span>•</span>
-                <span>{formatCurrency(trade.entry_price)} → {formatCurrency(trade.exit_price)}</span>
-              </div>
-            </div>
-          ))}
+            </>
+          )}
 
-          <h4 style={{ 
-            fontSize: '14px', 
-            fontWeight: '600', 
-            marginBottom: '16px',
-            marginTop: '24px',
-            color: 'var(--text-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            Worst Performing Trades
-          </h4>
-          
-          {worstTrades.map((trade, idx) => (
-            <div key={idx} className="trade-item">
-              <div className="trade-header">
-                <span className="trade-date">
-                  {new Date(trade.date).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </span>
-                <span className="trade-return" style={{ color: 'var(--accent-red)' }}>
-                  {formatPercent(trade.total_return)}
-                </span>
+          <div className="rp-divider" />
+
+          <div className="rp-section">
+            <div className="rp-section-title">Valuation</div>
+            {f.trailing_pe > 0 && <StatRow label="P/E (TTM)" value={`${f.trailing_pe?.toFixed(1)}x`} />}
+            {f.forward_pe > 0 && <StatRow label="P/E (Fwd)" value={`${f.forward_pe?.toFixed(1)}x`} />}
+            {f.pb_ratio > 0 && <StatRow label="P/B" value={`${f.pb_ratio?.toFixed(1)}x`} />}
+            {f.ps_ratio > 0 && <StatRow label="P/S" value={`${f.ps_ratio?.toFixed(1)}x`} />}
+            {f.peg_ratio > 0 && <StatRow label="PEG" value={`${f.peg_ratio?.toFixed(2)}x`} />}
+            {f.market_cap_cr > 0 && (
+              <StatRow label="Market Cap"
+                value={f.market_cap_cr >= 100000 ? `₹${(f.market_cap_cr/100000).toFixed(1)}L Cr` : `₹${(f.market_cap_cr/1000).toFixed(0)}K Cr`} />
+            )}
+          </div>
+
+          <div className="rp-divider" />
+
+          <div className="rp-section">
+            <div className="rp-section-title">Fundamentals</div>
+            {f.roe > 0 && <StatRow label="ROE" value={`${f.roe?.toFixed(1)}%`}
+              color={f.roe > 15 ? '#00b386' : '#787b86'} />}
+            {f.dividend_yield > 0 && <StatRow label="Div Yield" value={`${f.dividend_yield?.toFixed(2)}%`} />}
+            {f.beta && <StatRow label="Beta" value={f.beta?.toFixed(2)} />}
+            {f.sector && <StatRow label="Sector" value={f.sector} />}
+            {f.industry && <StatRow label="Industry" value={f.industry} />}
+          </div>
+
+          {f.analyst_recommendation && (
+            <>
+              <div className="rp-divider" />
+              <div className="rp-section">
+                <div className="rp-section-title">Analyst Consensus</div>
+                <div className="rp-consensus">
+                  <div className="rp-consensus-badge" style={{
+                    background: f.analyst_recommendation === 'buy' ? '#00b38620' : f.analyst_recommendation === 'sell' ? '#e8433f20' : '#ff980020',
+                    color: f.analyst_recommendation === 'buy' ? '#00b386' : f.analyst_recommendation === 'sell' ? '#e8433f' : '#ff9800',
+                    border: `1px solid ${f.analyst_recommendation === 'buy' ? '#00b38640' : f.analyst_recommendation === 'sell' ? '#e8433f40' : '#ff980040'}`,
+                  }}>
+                    {(f.analyst_recommendation || '').toUpperCase()}
+                  </div>
+                  {f.target_price && <div className="rp-target">Target ₹{f.target_price?.toFixed(0)}</div>}
+                </div>
               </div>
-              <div className="trade-details">
-                <span>{trade.event_type}</span>
-                <span>•</span>
-                <span>{formatCurrency(trade.entry_price)} → {formatCurrency(trade.exit_price)}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }
