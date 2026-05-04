@@ -85,6 +85,100 @@ SECTOR_STOCKS = {
     'Conglomerate': ['LT','GRASIM','ADANIENT','ADANIPORTS','HAL'],
 }
 
+# Symbol → company name for search. Covers NIFTY500 + popular mid/small caps.
+STOCK_NAMES: dict[str, str] = {
+    'RELIANCE':'Reliance Industries','TCS':'Tata Consultancy Services',
+    'HDFCBANK':'HDFC Bank','ICICIBANK':'ICICI Bank','BHARTIARTL':'Bharti Airtel',
+    'INFY':'Infosys','KOTAKBANK':'Kotak Mahindra Bank','LT':'Larsen & Toubro',
+    'HINDUNILVR':'Hindustan Unilever','ITC':'ITC Limited',
+    'AXISBANK':'Axis Bank','BAJFINANCE':'Bajaj Finance','SBIN':'State Bank of India',
+    'HCLTECH':'HCL Technologies','WIPRO':'Wipro',
+    'MARUTI':'Maruti Suzuki','ONGC':'ONGC','TITAN':'Titan Company',
+    'ASIANPAINT':'Asian Paints','NESTLEIND':'Nestle India',
+    'SUNPHARMA':'Sun Pharmaceutical','M&M':'Mahindra & Mahindra',
+    'TATAMOTORS':'Tata Motors','JSWSTEEL':'JSW Steel','COALINDIA':'Coal India',
+    'POWERGRID':'Power Grid Corp','TATASTEEL':'Tata Steel',
+    'DRREDDY':'Dr. Reddy\'s Laboratories','BAJAJFINSV':'Bajaj Finserv',
+    'DIVISLAB':'Divi\'s Laboratories','GRASIM':'Grasim Industries',
+    'ULTRACEMCO':'UltraTech Cement','TECHM':'Tech Mahindra','CIPLA':'Cipla',
+    'NTPC':'NTPC Limited','APOLLOHOSP':'Apollo Hospitals','ADANIENT':'Adani Enterprises',
+    'BRITANNIA':'Britannia Industries','BPCL':'BPCL','ADANIPORTS':'Adani Ports',
+    'INDUSINDBK':'IndusInd Bank','EICHERMOT':'Eicher Motors','HINDALCO':'Hindalco Industries',
+    'TRENT':'Trent Limited','HAL':'Hindustan Aeronautics','ZOMATO':'Zomato',
+    'HEROMOTOCO':'Hero MotoCorp','TATACONSUM':'Tata Consumer Products',
+    'PIDILITIND':'Pidilite Industries','IRCTC':'IRCTC',
+    # Mid/small caps
+    'PAYTM':'One97 Communications (Paytm)','NYKAA':'FSN E-Commerce (Nykaa)',
+    'DMART':'Avenue Supermarts (DMart)','BEL':'Bharat Electronics',
+    'POLICYBZR':'PB Fintech (PolicyBazaar)','VEDL':'Vedanta',
+    'BANKBARODA':'Bank of Baroda','PNB':'Punjab National Bank',
+    'INDIGO':'InterGlobe Aviation (IndiGo)','AMBUJACEM':'Ambuja Cements',
+    'SHREECEM':'Shree Cement','DABUR':'Dabur India','MARICO':'Marico',
+    'GODREJCP':'Godrej Consumer Products','COLPAL':'Colgate-Palmolive India',
+    'HAVELLS':'Havells India','VOLTAS':'Voltas','WHIRLPOOL':'Whirlpool India',
+    'DIXON':'Dixon Technologies','AMBER':'Amber Enterprises',
+    'LICI':'Life Insurance Corp','SBILIFE':'SBI Life Insurance',
+    'HDFCLIFE':'HDFC Life Insurance','ICICIGI':'ICICI Lombard',
+    'BAJAJHLDNG':'Bajaj Holdings','MUTHOOTFIN':'Muthoot Finance',
+    'CHOLAFIN':'Cholamandalam Finance','LICHSGFIN':'LIC Housing Finance',
+    'RECLTD':'REC Limited','PFC':'Power Finance Corp',
+    'NHPC':'NHPC Limited','SJVN':'SJVN Limited',
+    'ADANIGREEN':'Adani Green Energy','TATAPOWER':'Tata Power',
+    'TORNTPOWER':'Torrent Power','CESC':'CESC Limited',
+    'LUPIN':'Lupin Limited','AUROPHARMA':'Aurobindo Pharma',
+    'ALKEM':'Alkem Laboratories','TORNTPHARM':'Torrent Pharma',
+    'BIOCON':'Biocon','IPCALAB':'IPCA Laboratories',
+    'DRREDDY':'Dr. Reddy\'s','ABBOTINDIA':'Abbott India',
+    'PFIZER':'Pfizer India','GLAXO':'GSK Pharma India',
+    'TATACHEM':'Tata Chemicals','PIDILITIND':'Pidilite Industries',
+    'DEEPAKNI':'Deepak Nitrite','AAPL':'Apple Inc',
+    'MCDOWELL-N':'United Spirits','RADICO':'Radico Khaitan',
+    'UNITDSPR':'United Spirits','GLOBUSSP':'Globus Spirits',
+    'INDIGOPNTS':'Indigo Paints','KANSAINER':'Kansai Nerolac',
+    'AKZONOBEL':'Akzo Nobel India','BERGER':'Berger Paints',
+    'MPHASIS':'Mphasis','LTIM':'LTIMindtree','PERSISTENT':'Persistent Systems',
+    'COFORGE':'Coforge','MASTEK':'Mastek','KPITTECH':'KPIT Technologies',
+    'TATAELXSI':'Tata Elxsi','ROUTE':'Route Mobile','TANLA':'Tanla Platforms',
+    'NAUKRI':'Info Edge (Naukri)','JUSTDIAL':'Just Dial',
+    'INDIAMART':'IndiaMART InterMESH','CARTRADE':'CarTrade Tech',
+    'DELHIVERY':'Delhivery','NAZARA':'Nazara Technologies',
+    'RBLBANK':'RBL Bank','FEDERALBNK':'Federal Bank','KARURVYSYA':'Karur Vysya Bank',
+    'CANBK':'Canara Bank','UNIONBANK':'Union Bank of India',
+    'IDFCFIRSTB':'IDFC First Bank','BANDHANBNK':'Bandhan Bank',
+    'EQUITASBNK':'Equitas Small Finance Bank',
+    'MOTHERSON':'Samvardhana Motherson','BALKRISIND':'Balkrishna Industries',
+    'MRF':'MRF Limited','APOLLOTYRE':'Apollo Tyres','CEATLTD':'CEAT',
+    'ESCORTS':'Escorts Kubota','MAHINDCIE':'Mahindra CIE',
+    'JSWENERGY':'JSW Energy','TORNTPOWER':'Torrent Power',
+    'GMRINFRA':'GMR Airports','IRFC':'Indian Railway Finance Corp',
+    'RVNL':'Rail Vikas Nigam','IRCON':'Ircon International',
+    'ENGINERSIN':'Engineers India','NBCC':'NBCC India',
+    'DLF':'DLF Limited','GODREJPROP':'Godrej Properties','OBEROIRLTY':'Oberoi Realty',
+    'PRESTIGE':'Prestige Estates','MAHLIFE':'Mahindra Lifespace',
+    'STAR':'Star Health Insurance','NIACL':'New India Assurance',
+    'IIFL':'IIFL Finance','MANAPPURAM':'Manappuram Finance',
+    'SUNDARMFIN':'Sundaram Finance','M&MFIN':'Mahindra Finance',
+    'SHRIRAMFIN':'Shriram Finance','SCUF':'Sundaram Home Finance',
+    'ZEEL':'Zee Entertainment','SUNTV':'Sun TV Network','PVRINOX':'PVR INOX',
+    'INOXLEISUR':'INOX Leisure','SAREGAMA':'Saregama India',
+    'IGL':'Indraprastha Gas','MGL':'Mahanagar Gas','GUJGASLTD':'Gujarat Gas',
+    'PETRONET':'Petronet LNG','GAIL':'GAIL India',
+    'CONCOR':'Container Corp','BLUEDART':'Blue Dart Express',
+    'MAHLOG':'Mahindra Logistics','TCI':'Transport Corp',
+    'RAYMOND':'Raymond','ARVIND':'Arvind Limited','PAGEIND':'Page Industries',
+    'VMART':'V-Mart Retail','SHOPERSTOP':'Shoppers Stop',
+    'RELAXO':'Relaxo Footwears','BATA':'Bata India','VIPIND':'VIP Industries',
+    'TITAN':'Titan Company','KALYAN':'Kalyan Jewellers','SENCO':'Senco Gold',
+    'PCBL':'PCBL Limited','TATACHEM':'Tata Chemicals',
+    'UPL':'UPL Limited','PIIND':'PI Industries','RALLIS':'Rallis India',
+    'BAJAJELEC':'Bajaj Electricals','CROMPTON':'Crompton Greaves Consumer',
+    'BLUESTAR':'Blue Star','SYMPHONY':'Symphony Limited',
+    'LLOYDSME':"Lloyd's Metals",'HINDZINC':'Hindustan Zinc',
+    'NATIONALUM':'National Aluminium','RATNAMANI':'Ratnamani Metals',
+    'SAIL':'Steel Authority of India','NMDC':'NMDC Limited',
+    'MOIL':'MOIL Limited','HINDCOPPER':'Hindustan Copper',
+}
+
 
 def normalize_ticker(raw: str) -> str:
     """Convert user input (e.g. 'RELIANCE', 'tcs', 'Zomato') to NSE yfinance symbol."""
@@ -767,6 +861,62 @@ def get_market_status() -> dict:
         return _store(key, data)
     except Exception:
         return {}
+
+
+def get_fast_quote(ticker_input: str) -> dict:
+    """Price-only quote: NSE live + fast_info. TTL 15s, no t.info call."""
+    yf_sym = normalize_ticker(ticker_input)
+    nse_sym = yf_sym.replace('.NS', '').replace('.BO', '').replace('%26', '&')
+    key = f"fq:{nse_sym}"
+    cached = _cached(key, ttl=15)
+    if cached is not None:
+        return cached
+
+    result = {}
+
+    nse_q = get_nse_live_quote(yf_sym)
+    if nse_q.get('current'):
+        cur = nse_q['current']
+        prev = nse_q.get('previous_close', cur) or cur
+        result = {
+            'current': round(cur, 2),
+            'previous_close': round(prev, 2),
+            'open': round(nse_q.get('open', 0), 2),
+            'high': round(nse_q.get('high', 0), 2),
+            'low': round(nse_q.get('low', 0), 2),
+            'change': round(cur - prev, 2),
+            'change_pct': round((cur - prev) / prev * 100, 2) if prev else 0,
+            'vwap': round(nse_q.get('vwap', 0), 2),
+            'volume': 0,
+            'source': 'nse',
+        }
+
+    try:
+        fi = yf.Ticker(yf_sym).fast_info
+        cur = result.get('current') or float(fi.last_price or 0)
+        prev = result.get('previous_close') or float(fi.previous_close or cur)
+        if not result.get('current'):
+            result['current'] = round(cur, 2)
+            result['previous_close'] = round(prev, 2)
+            result['open'] = round(float(fi.open or 0), 2)
+            result['high'] = round(float(fi.day_high or 0), 2)
+            result['low'] = round(float(fi.day_low or 0), 2)
+            result['change'] = round(cur - prev, 2)
+            result['change_pct'] = round((cur - prev) / prev * 100, 2) if prev else 0
+            result['source'] = 'yf'
+        result['volume'] = int(float(fi.last_volume or 0))
+        result['52w_high'] = round(float(fi.year_high or 0), 2)
+        result['52w_low'] = round(float(fi.year_low or 0), 2)
+        result['market_cap'] = int(float(fi.market_cap or 0))
+    except Exception:
+        pass
+
+    result['company'] = STOCK_NAMES.get(nse_sym, nse_sym)
+    result['symbol'] = nse_sym
+
+    if result.get('current'):
+        _store(key, result)
+    return result
 
 
 def get_sector_performance() -> list:

@@ -6,6 +6,7 @@ const WS_BASE = process.env.REACT_APP_WS_URL || 'ws://localhost:8000';
 export const api = {
   // ── Market data ─────────────────────────────────────────────────────────
   getIndices: () => axios.get(`${API_BASE}/api/indices`),
+  getFastQuote: (ticker) => axios.get(`${API_BASE}/api/quote/${ticker}`),
   getStock: (ticker) => axios.get(`${API_BASE}/api/stock/${ticker}`),
   getTechnicals: (ticker) => axios.get(`${API_BASE}/api/technicals/${ticker}`),
   getFinancials: (ticker) => axios.get(`${API_BASE}/api/financials/${ticker}`),

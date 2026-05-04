@@ -25,6 +25,31 @@ function Dashboard({ section, setSection, ticker, setTicker, indices, onSelectTi
     setStockLoading(true);
     setTechnicals(null);
     setFinancials(null);
+
+    // Phase 1: fast quote — price card visible immediately
+    try {
+      const fq = await api.getFastQuote(t);
+      if (fq.data?.current) {
+        setStockData({
+          company: fq.data.company || t,
+          quote: {
+            current: fq.data.current,
+            previous_close: fq.data.previous_close,
+            open: fq.data.open,
+            high: fq.data.high,
+            low: fq.data.low,
+            change: fq.data.change,
+            change_pct: fq.data.change_pct,
+            volume: fq.data.volume,
+            vwap: fq.data.vwap,
+          },
+          fundamentals: { '52w_high': fq.data['52w_high'], '52w_low': fq.data['52w_low'], market_cap: fq.data.market_cap },
+        });
+        setStockLoading(false);
+      }
+    } catch (_) {}
+
+    // Phase 2: full data in background (fundamentals, news, etc.)
     try {
       const [stockRes, techRes, finRes] = await Promise.allSettled([
         api.getStock(t),

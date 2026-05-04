@@ -16,10 +16,12 @@ from dotenv import load_dotenv
 import random
 import asyncio
 
+import indian_market
 from indian_market import (
     get_stock_data, get_historical_prices, get_technicals,
     get_quarterly_financials, get_indices, get_events,
     normalize_ticker, NIFTY50_STOCKS, SECTOR_STOCKS, format_inr,
+    STOCK_NAMES, get_fast_quote,
 )
 from ml_signals import MLSignalEngine
 import ai_service
@@ -132,14 +134,26 @@ async def get_financials(ticker: str):
 
 @app.get("/api/search")
 async def search_stocks(q: str = ""):
-    """Search NSE stocks by name or symbol."""
-    q = q.upper().strip()
+    """Search NSE stocks by symbol or company name."""
+    q_up = q.upper().strip()
+    q_low = q.lower().strip()
+    if not q_up:
+        return []
     results = []
-    all_stocks = NIFTY50_STOCKS + ['ZOMATO','PAYTM','IRCTC','HAL','BEL','DMART','NYKAA','POLICYBZR']
-    for s in all_stocks:
-        if q in s:
-            results.append({'symbol': s, 'display': s + '.NS'})
+    for sym, name in STOCK_NAMES.items():
+        if q_up in sym or q_low in name.lower():
+            results.append({'symbol': sym, 'name': name, 'display': f'{sym} — {name}'})
+    results.sort(key=lambda r: (not r['symbol'].startswith(q_up), r['symbol']))
     return results[:10]
+
+
+@app.get("/api/quote/{ticker}")
+async def get_fast_price(ticker: str):
+    """Price-only quote using NSE live feed + fast_info. Returns in <500ms."""
+    try:
+        return get_fast_quote(ticker)
+    except Exception as e:
+        return {"error": str(e), "ticker": ticker}
 
 
 @app.get("/api/sector/{sector}")
