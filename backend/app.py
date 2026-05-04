@@ -376,6 +376,33 @@ async def research_agent(ticker: str):
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+# ── Market-wide data endpoints ────────────────────────────────────────────────
+
+@app.get("/api/fii-dii")
+async def api_fii_dii():
+    return indian_market.get_fii_dii()
+
+
+@app.get("/api/gainers-losers")
+async def api_gainers_losers():
+    return indian_market.get_top_gainers_losers()
+
+
+@app.get("/api/options/{symbol}")
+async def api_option_chain(symbol: str):
+    return indian_market.get_option_chain(symbol)
+
+
+@app.get("/api/market-status")
+async def api_market_status():
+    return indian_market.get_market_status()
+
+
+@app.get("/api/sector-performance")
+async def api_sector_performance():
+    return indian_market.get_sector_performance()
+
+
 # ── Live data (legacy compatibility) ──────────────────────────────────────────
 
 @app.get("/api/live/{ticker}")

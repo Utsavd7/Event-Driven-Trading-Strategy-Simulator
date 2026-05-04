@@ -258,14 +258,14 @@ class EventBacktester:
         
         return metrics
 
-    def _calculate_sharpe(self, returns, risk_free_rate=0.02):
-        """Calculate Sharpe ratio"""
+    def _calculate_sharpe(self, returns, risk_free_rate=0.065):
+        """Calculate Sharpe ratio (6.5% Indian risk-free rate)"""
         if len(returns) < 2:
             return 0
         excess_returns = returns - risk_free_rate/252
         return np.sqrt(252) * excess_returns.mean() / returns.std() if returns.std() > 0 else 0
 
-    def _calculate_sortino(self, returns, risk_free_rate=0.02):
+    def _calculate_sortino(self, returns, risk_free_rate=0.065):
         """Calculate Sortino ratio (penalizes downside volatility only)"""
         if len(returns) < 2:
             return 0

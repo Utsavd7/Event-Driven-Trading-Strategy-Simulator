@@ -9,11 +9,15 @@ export const api = {
   getStock: (ticker) => axios.get(`${API_BASE}/api/stock/${ticker}`),
   getTechnicals: (ticker) => axios.get(`${API_BASE}/api/technicals/${ticker}`),
   getFinancials: (ticker) => axios.get(`${API_BASE}/api/financials/${ticker}`),
-  searchStocks: (q) => axios.get(`${API_BASE}/api/search?q=${q}`),
+  searchStocks: (q) => axios.get(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`),
   getSectorStocks: (sector) => axios.get(`${API_BASE}/api/sector/${sector}`),
 
-  // ── Live data (legacy) ───────────────────────────────────────────────────
-  getLiveData: (ticker) => axios.get(`${API_BASE}/api/live/${ticker}`),
+  // ── Market-wide data (new) ───────────────────────────────────────────────
+  getFiiDii: () => axios.get(`${API_BASE}/api/fii-dii`),
+  getGainersLosers: () => axios.get(`${API_BASE}/api/gainers-losers`),
+  getOptionChain: (symbol) => axios.get(`${API_BASE}/api/options/${encodeURIComponent(symbol)}`),
+  getMarketStatus: () => axios.get(`${API_BASE}/api/market-status`),
+  getSectorPerformance: () => axios.get(`${API_BASE}/api/sector-performance`),
 
   // ── Backtest ─────────────────────────────────────────────────────────────
   runBacktest: (params) => axios.post(`${API_BASE}/api/backtest`, params),

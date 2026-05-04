@@ -680,3 +680,126 @@ def format_inr(amount: float) -> str:
     elif amount >= 1e5:
         return f"₹{amount/1e5:.1f} L"
     return f"₹{amount:,.0f}"
+
+
+# ── New market-wide data endpoints ────────────────────────────────────────────
+
+def get_fii_dii() -> dict:
+    """FII/DII daily trade data from NSE."""
+    key = "fii_dii"
+    cached = _cached(key, ttl=300)
+    if cached is not None:
+        return cached
+    try:
+        s = _get_nse_session()
+        r = s.get('https://www.nseindia.com/api/fiidiiTradeReact', timeout=10)
+        if r.status_code != 200:
+            return {'data': []}
+        data = r.json()
+        return _store(key, data)
+    except Exception:
+        return {'data': []}
+
+
+def get_top_gainers_losers() -> dict:
+    """Top gainers and losers from NSE NIFTY 500."""
+    key = "gainers_losers"
+    cached = _cached(key, ttl=120)
+    if cached is not None:
+        return cached
+    try:
+        s = _get_nse_session()
+        r = s.get('https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20500', timeout=10)
+        if r.status_code != 200:
+            return {'gainers': [], 'losers': [], 'advances': 0, 'declines': 0, 'unchanged': 0}
+        data = r.json()
+        stocks = [st for st in data.get('data', []) if st.get('symbol') and st.get('symbol') != 'NIFTY 500']
+        gainers = sorted(stocks, key=lambda x: x.get('pChange', 0), reverse=True)[:10]
+        losers = sorted(stocks, key=lambda x: x.get('pChange', 0))[:10]
+        result = {
+            'gainers': gainers,
+            'losers': losers,
+            'advances': sum(1 for st in stocks if st.get('pChange', 0) > 0),
+            'declines': sum(1 for st in stocks if st.get('pChange', 0) < 0),
+            'unchanged': sum(1 for st in stocks if st.get('pChange', 0) == 0),
+            'total': len(stocks),
+        }
+        return _store(key, result)
+    except Exception:
+        return {'gainers': [], 'losers': [], 'advances': 0, 'declines': 0, 'unchanged': 0}
+
+
+def get_option_chain(symbol: str) -> dict:
+    """Option chain from NSE for equity or index."""
+    sym = symbol.upper().replace(' ', '').replace('%26', '&')
+    key = f"options_{sym}"
+    cached = _cached(key, ttl=60)
+    if cached is not None:
+        return cached
+    try:
+        s = _get_nse_session()
+        index_syms = {'NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'BANKEX'}
+        if sym in index_syms:
+            url = f'https://www.nseindia.com/api/option-chain-indices?symbol={sym}'
+        else:
+            url = f'https://www.nseindia.com/api/option-chain-equities?symbol={sym}'
+        r = s.get(url, timeout=15)
+        if r.status_code != 200:
+            return {'error': f'NSE returned {r.status_code}', 'records': {}}
+        data = r.json()
+        return _store(key, data)
+    except Exception as e:
+        return {'error': str(e), 'records': {}}
+
+
+def get_market_status() -> dict:
+    """NSE market open/closed status."""
+    key = "market_status"
+    cached = _cached(key, ttl=30)
+    if cached is not None:
+        return cached
+    try:
+        s = _get_nse_session()
+        r = s.get('https://www.nseindia.com/api/marketStatus', timeout=5)
+        if r.status_code != 200:
+            return {}
+        data = r.json()
+        return _store(key, data)
+    except Exception:
+        return {}
+
+
+def get_sector_performance() -> list:
+    """All NSE sector indices with performance from allIndices endpoint."""
+    key = "sector_perf"
+    cached = _cached(key, ttl=180)
+    if cached is not None:
+        return cached
+    try:
+        s = _get_nse_session()
+        r = s.get('https://www.nseindia.com/api/allIndices', timeout=10)
+        if r.status_code != 200:
+            return []
+        data = r.json()
+        indices = data.get('data', [])
+        sector_keywords = [
+            'NIFTY AUTO', 'NIFTY BANK', 'NIFTY FMCG', 'NIFTY IT',
+            'NIFTY METAL', 'NIFTY PHARMA', 'NIFTY REALTY', 'NIFTY ENERGY',
+            'NIFTY MEDIA', 'NIFTY INFRA', 'NIFTY PSU BANK', 'NIFTY FINANCIAL SERVICES',
+            'NIFTY CONSR DURBL', 'NIFTY OIL AND GAS', 'NIFTY HEALTHCARE',
+        ]
+        sectors = []
+        for idx in indices:
+            name = idx.get('index', '')
+            if any(kw in name for kw in sector_keywords):
+                sectors.append({
+                    'name': name,
+                    'last': idx.get('last', 0),
+                    'change': idx.get('variation', 0),
+                    'pChange': idx.get('percentChange', 0),
+                    'yearHigh': idx.get('yearHigh', 0),
+                    'yearLow': idx.get('yearLow', 0),
+                })
+        return _store(key, sectors)
+    except Exception:
+        return []

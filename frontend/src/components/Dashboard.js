@@ -3,22 +3,23 @@ import LeftPanel from './LeftPanel';
 import CenterPanel from './CenterPanel';
 import RightPanel from './RightPanel';
 import AIPanel from './AIPanel';
+import MarketDashboard from './MarketDashboard';
+import Watchlist from './Watchlist';
+import OptionsChain from './OptionsChain';
 import api from '../api';
 import { toast } from 'react-toastify';
 
-function Dashboard({ activeTab }) {
-  const [ticker, setTicker] = useState('RELIANCE');
+function Dashboard({ section, setSection, ticker, setTicker, indices, onSelectTicker }) {
   const [stockData, setStockData] = useState(null);
   const [technicals, setTechnicals] = useState(null);
   const [financials, setFinancials] = useState(null);
   const [backtestData, setBacktestData] = useState(null);
   const [aiNarrative, setAiNarrative] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [backtestLoading, setBacktestLoading] = useState(false);
   const [stockLoading, setStockLoading] = useState(false);
   const [techLoading, setTechLoading] = useState(false);
   const [ws, setWs] = useState(null);
 
-  // Fetch all stock data when ticker changes
   const fetchStockData = useCallback(async (t) => {
     if (!t) return;
     setStockLoading(true);
@@ -37,14 +38,15 @@ function Dashboard({ activeTab }) {
       console.error('Stock fetch error:', err);
     }
     setStockLoading(false);
+    setTechLoading(false);
   }, []);
 
   useEffect(() => {
     setTechLoading(true);
-    fetchStockData(ticker).finally(() => setTechLoading(false));
+    fetchStockData(ticker);
   }, [ticker, fetchStockData]);
 
-  // WebSocket for live price updates
+  // WebSocket live price
   useEffect(() => {
     if (ws) ws.close();
     const websocket = api.connectWebSocket(ticker);
@@ -52,20 +54,17 @@ function Dashboard({ activeTab }) {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'price_update') {
-          setStockData(prev => prev ? {
-            ...prev,
-            quote: { ...prev.quote, ...data.data }
-          } : prev);
+          setStockData(prev => prev ? { ...prev, quote: { ...prev.quote, ...data.data } } : prev);
         }
       } catch (_) {}
     };
     websocket.onerror = () => {};
     setWs(websocket);
     return () => websocket.close();
-  }, [ticker]); // ws excluded intentionally
+  }, [ticker]); // ws ref excluded intentionally to avoid reconnect loop
 
   const runBacktest = async (params) => {
-    setLoading(true);
+    setBacktestLoading(true);
     setAiNarrative(null);
     try {
       const res = await api.runBacktest({ ticker, ...params });
@@ -73,29 +72,50 @@ function Dashboard({ activeTab }) {
       const m = res.data.overall_metrics;
       if (m?.total_events > 0) {
         toast.success(
-          `✓ ${m.total_events} events · ${(m.win_rate * 100).toFixed(1)}% win rate · ${(m.avg_return * 100).toFixed(2)}% avg return`,
+          `${m.total_events} events · ${(m.win_rate * 100).toFixed(1)}% win rate · ${(m.avg_return * 100).toFixed(2)}% avg return`,
           { autoClose: 5000 }
         );
-        // AI narrative in background
         api.getBacktestNarrative(res.data, ticker)
           .then(r => setAiNarrative(r.data.narrative))
           .catch(() => {});
       } else {
         toast.warning('No events found for the selected criteria');
       }
-    } catch (err) {
+    } catch {
       toast.error('Backtest failed. Please try again.');
     }
-    setLoading(false);
+    setBacktestLoading(false);
   };
 
-  if (activeTab === 'ai') {
+  // ── Section routing ──────────────────────────────────────────────────────
+
+  if (section === 'dashboard') {
+    return (
+      <MarketDashboard
+        indices={indices}
+        onSelectTicker={onSelectTicker}
+      />
+    );
+  }
+
+  if (section === 'watchlist') {
+    return <Watchlist onSelectTicker={onSelectTicker} />;
+  }
+
+  if (section === 'options') {
+    return <OptionsChain />;
+  }
+
+  if (section === 'ai') {
     return (
       <div className="dashboard ai-full">
         <AIPanel backtestData={backtestData} stockData={stockData} ticker={ticker} />
       </div>
     );
   }
+
+  // analysis | backtest — 3-panel layout
+  const activeTab = section === 'backtest' ? 'backtest' : 'analysis';
 
   return (
     <div className="dashboard">
@@ -104,8 +124,8 @@ function Dashboard({ activeTab }) {
         setTicker={setTicker}
         stockData={stockData}
         stockLoading={stockLoading}
-        onRunBacktest={activeTab === 'backtest' ? runBacktest : null}
-        loading={loading}
+        onRunBacktest={section === 'backtest' ? runBacktest : null}
+        loading={backtestLoading}
         activeTab={activeTab}
       />
       <CenterPanel
@@ -115,7 +135,7 @@ function Dashboard({ activeTab }) {
         financials={financials}
         backtestData={backtestData}
         aiNarrative={aiNarrative}
-        loading={loading}
+        loading={backtestLoading}
         stockLoading={stockLoading}
         techLoading={techLoading}
         activeTab={activeTab}
